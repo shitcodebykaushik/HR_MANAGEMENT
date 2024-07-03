@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log"
 	"time"
 
@@ -22,7 +21,7 @@ type MongoInstance struct {
 var mg MongoInstance
 
 const dbName = "fiber-hrms"
-const mongoURI = " mongodb://127.0.0.1:27017/" + dbName
+const mongoURI = "mongodb://localhost:27017/ " + dbName
 
 type Employee struct {
 	ID   string    `json:"id,omitempty" bson:"_id,omitempty"`
@@ -33,7 +32,7 @@ type Employee struct {
 //  Connect function
 func Connect() error {
  client,err :=mongo.NewClient(options.Client().ApplyURI( mongoURI))
- ctx,cancel:=context.WithTimeout(context.Background(),30*time.Second)
+ ctx,cancel :=context.WithTimeout(context.Background(),30*time.Second)
  defer cancel ()
  err =client.Connect(ctx)
  db :=client.Database(dbName)
@@ -51,12 +50,7 @@ func Connect() error {
 
  return nil 
 
-
-
-
 }
-
-
 
 func main () {
 	if err := Connect();err !=nil {
@@ -85,25 +79,21 @@ func main () {
 
 
 	})
-    app.Post("/employee", func (c *fiber.Ctx)errors{
+    app.Post("/employee", func (c *fiber.Ctx)error{
 		collection := mg.Db.Collection("employees")
 
 
 		employee := new(Employee)
-		if err := c.BodyParser(employee);  // IT parses the body and pass it to the variable .
-	    err !=nil {
+		
+		  // IT parses the body and pass it to the variable .
+		if err := c.BodyParser(employee);err !=nil {
 			return c.Status(400).SendString(err.Error())
 		}
 
-		employee.ID = ""
-
-		insertionResult,err := collection.InsertOne(c.Context(),employee)
-	    if err := c.BodyParser(employee);err !=nill {
-			retur c. Status (400).SendString(err.Error ())
-		}
+		
 
 		employee.ID = ""
-		insertionResult, err := collection.InsterOne (c.Context (),employee)
+		insertionResult, err := collection.InsertOne(c.Context(), employee)
         if err !=nil {
 			return c.Status(500).SendString (err.Error())
 		}	
@@ -114,12 +104,12 @@ func main () {
 		createdEmployee := &Employee {}
 		createdRecord.Decode(createdEmployee)
 
-		return c.Status(201),json (createdEmployee)
+		return c.Status(201).JSON(createdEmployee)
 	})
 
 
 
-	app.Put("/employee/:id".func(c *fiber.Ctx) error {
+	app.Put("/employee/:id", func(c *fiber.Ctx) error {
 		idParam := c.Params("id")
 		employeeID,err := primitive.ObjectIDFromHex (idParam)
         
@@ -129,10 +119,10 @@ func main () {
 		employee := new(Employee) 
 
 		if err := c.BodyParser(employee); err !=nil {
-			retrun c.Status(400).SendString(err.Error())
+			return c.Status(400).SendString(err.Error())
 		}
 
-		query := bson.D {{Key:"_id",Value: emloyeeID}}
+		query := bson.D {{Key:"_id",Value: employeeID}}
 		update :=bson.D{
 			{
 				Key: "$set",
@@ -143,9 +133,9 @@ func main () {
 				 },
 			},
 		}
-		err = mg.Db.Collection("employees").FindOneAndUpdate(c.context(),query, update).Err() 
+		err = mg.Db.Collection("employees").FindOneAndUpdate(c.Context(),query, update).Err() 
 		if err !=nil {
-			if err ==momgo.ErrNoDocuments {
+			if err ==mongo.ErrNoDocuments {
 				return c.SendStatus((400))
 			}
 			return c.SendStatus(500)
@@ -158,7 +148,7 @@ func main () {
 	})
  
 	app.Delete("/employee/:id",func (c *fiber.Ctx)error {
-		empemployeeID,err :=  primitive.ObjectIDFromHex(c.Params("id"),)
+		employeeID,err :=  primitive.ObjectIDFromHex(c.Params("id"),)
 
 		if err!=nil {
 			return c.SendStatus(400)
